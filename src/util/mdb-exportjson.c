@@ -27,8 +27,8 @@
 #undef MDB_BIND_SIZE
 #define MDB_BIND_SIZE 200000
 
-#define is_quote_type(x) (x==MDB_TEXT || x==MDB_OLE || x==MDB_MEMO || x==MDB_DATETIME || x==MDB_BINARY || x==MDB_REPID)
-#define is_binary_type(x) (x==MDB_OLE || x==MDB_BINARY || x==MDB_REPID)
+#define is_quote_type(x) (x==MDB_TEXT || x==MDB_OLE || x==MDB_MEMO || x==MDB_DATETIME || x==MDB_BINARY || x==MDB_REPID || x==MDB_UNKNOWN_11)
+#define is_binary_type(x) (x==MDB_OLE || x==MDB_BINARY || x==MDB_REPID || x==MDB_UNKNOWN_11)
 
 static char *quote_char = "\"";
 static char *escape_char = "\\";

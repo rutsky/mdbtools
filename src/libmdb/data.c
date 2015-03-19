@@ -18,6 +18,8 @@
 
 #include <time.h>
 #include <math.h>
+#include <assert.h>
+#include <assert.h>
 #include "mdbtools.h"
 
 #ifdef DMALLOC
@@ -238,6 +240,40 @@ int ret;
 	}
 	return 0;
 }
+static size_t
+mdb_xfer_bound_binary17(MdbHandle *mdb, int start, MdbColumn *col, int len)
+{
+  int ret;
+          //if (!strcmp("Name",col->name)) {
+                  //printf("start %d %d\n",start, len);
+          //}
+          if (len) {
+                  col->cur_value_start = start;
+                  col->cur_value_len = len;
+          } else {
+                  col->cur_value_start = 0;
+                  col->cur_value_len = 0;
+          }
+          if (col->bind_ptr) {
+                  if (!len) {
+                          strcpy(col->bind_ptr, "");
+                          ret = 0;
+                  } else {
+                          //fprintf(stdout,"len %d size %d\n",len, col->col_size);
+                          char *str;
+                          assert(col->col_type == MDB_UNKNOWN_11);
+                          str = mdb_col_to_string(mdb, mdb->pg_buf, start, col->col_type, len);
+                          memcpy(col->bind_ptr, str, len);
+                          g_free(str);
+                          ret = len;
+                  }
+                  if (col->len_ptr) {
+                          *col->len_ptr = ret;
+                  }
+                  return ret;
+          }
+          return 0;
+}
 int mdb_read_row(MdbTableDef *table, unsigned int row)
 {
 	MdbHandle *mdb = table->entry->mdb;
@@ -306,6 +342,8 @@ static int _mdb_attempt_bind(MdbHandle *mdb,
 		mdb_xfer_bound_data(mdb, 0, col, 0);
 	} else if (col->col_type == MDB_OLE) {
 		mdb_xfer_bound_ole(mdb, offset, col, len);
+        } else if (col->col_type == MDB_UNKNOWN_11) {
+                mdb_xfer_bound_binary17(mdb, offset, col, len);
 	} else {
 		//if (!mdb_test_sargs(mdb, col, offset, len)) {
 			//return 0;
@@ -927,6 +965,7 @@ char *mdb_col_to_string(MdbHandle *mdb, void *buf, int start, int datatype, int 
 			td = mdb_get_double(buf, start);
 			text = g_strdup_printf("%.16e", td);
 		break;
+                case MDB_UNKNOWN_11: // XXX
 		case MDB_BINARY:
 			if (size<0) {
 				text = g_strdup("");

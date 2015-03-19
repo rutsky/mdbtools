@@ -399,6 +399,56 @@ static ssize_t _mdb_read_pg(MdbHandle *mdb, void *pg_buf, unsigned long pg)
 
 	return len;
 }
+void mdb_encrypt_current_pg(MdbHandle *mdb)
+{
+	unsigned int pg = mdb->cur_pg;
+        if (pg != 0 && mdb->f->db_key != 0)
+        {
+                RC4_KEY rc4_key;
+                unsigned int tmp_key = mdb->f->db_key ^ pg;
+                RC4_set_key(&rc4_key, 4, (unsigned char *)&tmp_key);
+                RC4(&rc4_key, mdb->fmt->pg_size, mdb->pg_buf);
+        }
+}
+ssize_t mdb_encrypt_pg(MdbHandle *mdb, void *pg_buf, unsigned long pg)
+{
+        ssize_t len;
+        struct stat status;
+        off_t offset = pg * mdb->fmt->pg_size;
+
+        fstat(mdb->f->fd, &status);
+        if (status.st_size < offset) {
+                fprintf(stderr,"offset %jd is beyond EOF\n",(intmax_t)offset);
+                return 0;
+        }
+        if (mdb->stats && mdb->stats->collect)
+                mdb->stats->pg_reads++;
+
+        lseek(mdb->f->fd, offset, SEEK_SET);
+        len = read(mdb->f->fd,pg_buf,mdb->fmt->pg_size);
+        if (len==-1) {
+                perror("read");
+                return 0;
+        }
+        else if (len<mdb->fmt->pg_size) {
+                /* fprintf(stderr,"EOF reached %d bytes returned.\n",len, mdb->fmt->pg_size); */
+                return 0;
+        }
+        /*
+         * unencrypt the page if necessary.
+         * it might make sense to cache the unencrypted data blocks?
+         */
+        if (pg != 0 && mdb->f->db_key != 0)
+        {
+                RC4_KEY rc4_key;
+                unsigned int tmp_key = mdb->f->db_key ^ pg;
+                RC4_set_key(&rc4_key, 4, (unsigned char *)&tmp_key);
+                RC4(&rc4_key, mdb->fmt->pg_size, pg_buf);
+        }
+
+        return len;
+}
+
 void mdb_swap_pgbuf(MdbHandle *mdb)
 {
 char tmpbuf[MDB_PGSIZE];

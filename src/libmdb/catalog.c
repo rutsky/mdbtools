@@ -118,7 +118,7 @@ GPtrArray *mdb_read_catalog (MdbHandle *mdb, int objtype)
 			entry->mdb = mdb;
 			strcpy(entry->object_name, obj_name);
 			entry->object_type = (type & 0x7F);
-			entry->table_pg = atol(obj_id) & 0x00FFFFFF;
+                        entry->table_pg = atol(obj_id) & 0x00FFFFFF; // TODO: high order bit probably marks remove table
 			entry->flags = atol(obj_flags);
 			mdb->num_catalog++;
 			g_ptr_array_add(mdb->catalog, entry);

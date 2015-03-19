@@ -100,6 +100,7 @@ enum {
 	MDB_MEMO = 0x0c,
 	MDB_REPID = 0x0f,
 	MDB_NUMERIC = 0x10,
+	MDB_UNKNOWN_11 = 0x11,
 	MDB_COMPLEX = 0x12
 };
 
@@ -435,6 +436,7 @@ extern MDB_DEPRECATED(void, mdb_init());
 extern MDB_DEPRECATED(void, mdb_exit());
 
 /* file.c */
+extern void mdb_encrypt_current_pg(MdbHandle *mdb);
 extern ssize_t mdb_read_pg(MdbHandle *mdb, unsigned long pg);
 extern ssize_t mdb_read_alt_pg(MdbHandle *mdb, unsigned long pg);
 extern unsigned char mdb_get_byte(void *buf, int offset);
